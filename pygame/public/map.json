@@ -1,0 +1,64 @@
+import json
+
+# Load the JSON map data from a file
+def load_map(filename):
+    with open(filename, 'r') as file:
+        return json.load(file)
+
+# Process the map data
+def process_map(map_data):
+    print("Map Width:", map_data['width'])
+    print("Map Height:", map_data['height'])
+    print("Tile Width:", map_data['tilewidth'])
+    print("Tile Height:", map_data['tileheight'])
+
+    # Print details about layers
+    for layer in map_data['layers']:
+        print("Layer Name:", layer['name'])
+        if 'data' in layer:
+            # This is a tile layer
+            print("Tile Data Length:", len(layer['data']))
+        elif 'objects' in layer:
+            # This is an object layer
+            print("Number of Objects:", len(layer['objects']))
+
+# Example usage
+map_data = load_map('map.json')
+process_map(map_data)
+import pygame
+
+def draw_map(screen, tileset, map_data):
+    tile_width = map_data['tilewidth']
+    tile_height = map_data['tileheight']
+    image = pygame.image.load(tileset['image']).convert_alpha()
+
+    for layer in map_data['layers']:
+        if 'data' in layer:
+            for y in range(layer['height']):
+                for x in range(layer['width']):
+                    tile_id = layer['data'][x + y * layer['width']] - 1  # Adjust for zero index
+                    if tile_id >= 0:
+                        tile_x = (tile_id % tileset['columns']) * tile_width
+                        tile_y = (tile_id // tileset['columns']) * tile_height
+                        screen.blit(image, (x * tile_width, y * tile_height), (tile_x, tile_y, tile_width, tile_height))
+
+# Set up Pygame
+pygame.init()
+screen = pygame.display.set_mode((432, 208))  # Adjust size accordingly
+
+# Load map and tileset
+map_data = load_map('map.json')
+tileset = map_data['tilesets'][0]
+
+# Main game loop
+running = True
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    screen.fill((0, 0, 0))  # Clear screen with black
+    draw_map(screen, tileset, map_data)
+    pygame.display.flip()
+
+pygame.quit()
